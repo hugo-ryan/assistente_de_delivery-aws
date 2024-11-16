@@ -1,0 +1,55 @@
+{
+  "Comment": "Assistente de Delivery utilizando AWS Step Functions e Amazon Bedrock",
+  "StartAt": "ReceberPedido",
+  "States": {
+    "ReceberPedido": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:ReceberPedidoFunction",
+      "Next": "ValidarPedido"
+    },
+    "ValidarPedido": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.pedidoValido",
+          "BooleanEquals": true,
+          "Next": "IntegrarPagamento"
+        },
+        {
+          "Variable": "$.pedidoValido",
+          "BooleanEquals": false,
+          "Next": "NotificarErro"
+        }
+      ],
+      "Default": "NotificarErro"
+    },
+    "IntegrarPagamento": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:IntegrarPagamentoFunction",
+      "Next": "AtualizarStatusPagamento"
+    },
+    "AtualizarStatusPagamento": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:AtualizarStatusPagamentoFunction",
+      "Next": "AtualizarStatusPedido"
+    },
+    "AtualizarStatusPedido": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:AtualizarStatusPedidoFunction",
+      "Next": "PersonalizarExperiencia"
+    },
+    "PersonalizarExperiencia": {
+      "Type": "Task",
+      "Resource": "arn:aws:bedrock:REGION:ACCOUNT_ID:resource:PersonalizarExperienciaFunction",
+      "Next": "FinalizarPedido"
+    },
+    "NotificarErro": {
+      "Type": "Fail",
+      "Error": "PedidoInvalido",
+      "Cause": "O pedido não é válido."
+    },
+    "FinalizarPedido": {
+      "Type": "Succeed"
+    }
+  }
+}
